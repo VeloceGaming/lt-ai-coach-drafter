@@ -1,0 +1,5 @@
+# Shared by the Coach (src-tauri/src/drafter.rs) and the lt_ai_coach_drafter mod.
+# side<TAB>the user's picks in DRAFT ORDER (not sorted)<TAB>expected swap fingerprint
+red	a,b,c,d,e	swap/red/a,b,c,d,e
+blue	e,d,c,b,a	swap/blue/e,d,c,b,a
+red	cf_archangel,harpy,whip_master,shield_bearer,clown	swap/red/cf_archangel,harpy,whip_master,shield_bearer,clown

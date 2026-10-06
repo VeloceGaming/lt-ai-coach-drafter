@@ -1,0 +1,11 @@
+# Shared by the Coach (src-tauri/src/drafter.rs) and the lt_ai_coach_drafter mod.
+# side<TAB>bans (any order)<TAB>blue picks<TAB>red picks<TAB>expected fingerprint
+# Both canonicalisers must produce exactly the last column. Lists are comma separated;
+# an empty field is an empty list. Picks are sorted too: draft order is not part of it.
+red				red///
+red	gunner			red/gunner//
+red	plague_doctor,gunner			red/gunner,plague_doctor//
+blue	ghost,berserker,gunner,illusionist,plague_doctor,whip_master	tale		blue/berserker,ghost,gunner,illusionist,plague_doctor,whip_master/tale/
+red	b,a	z,y	cf_archangel,harpy,whip_master	red/a,b/y,z/cf_archangel,harpy,whip_master
+red	illusionist	nullifier,clown,tale	cf_archangel,fireblade	red/illusionist/clown,nullifier,tale/cf_archangel,fireblade
+blue	a2,a10,a1			blue/a1,a10,a2//

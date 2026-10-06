@@ -1,0 +1,16 @@
+[package]
+name = "lt_ai_coach_drafter"
+version = "1.0.0"
+edition = "2021"
+
+# LT Coach Drafter: replaces the game's "Delegate to Head Coach" so the game's own
+# delegation drafts the user's ban/pick from LT Coach's recommendation.
+# Stable SDK, builds with any toolchain:  cargo build --release
+# Output: target/release/lt_ai_coach_drafter.dll
+# Install: copy into mods/lt_ai_coach_drafter/ beside mod.mod_info
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+mod-api-stable = { path = "../mod-sdk-stable-0.6.0/mod-api-stable" }
