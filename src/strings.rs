@@ -19,6 +19,9 @@ pub struct Texts {
     pub overlay: &'static str,
     /// The cover over the swap stage's Coach button.
     pub swap_cover: &'static str,
+    /// Under the game's "Finish Ban/Pick Now" button (0.6.3+): that button finishes the
+    /// draft without asking LT Coach.
+    pub instant_warning: &'static str,
     /// The warning shown when the button is pressed with LT Coach drafting off.
     pub warn_title: &'static str,
     pub warn_line1: &'static str,
@@ -35,26 +38,27 @@ struct Buttons {
     cover: &'static str,
     swap_cover: &'static str,
     overlay: &'static str,
+    instant_warning: &'static str,
 }
 
 const BUTTONS: [Buttons; 17] = [
-    Buttons { id: "ko", signature: "밴픽을 수석코치에게 위임", cover: "밴픽을 LT Coach에게 위임", swap_cover: "스왑을 LT Coach에게 위임", overlay: "LT Coach가 밴픽을 진행중입니다..." },
-    Buttons { id: "en", signature: "Delegate ban/pick to Head Coach", cover: "Delegate ban/pick to LT Coach", swap_cover: "Delegate swap to LT Coach", overlay: "LT Coach is running ban/pick..." },
-    Buttons { id: "ja", signature: "バンピックをヘッドコーチに委任", cover: "バンピックをLT Coachに委任", swap_cover: "スワップをLT Coachに委任", overlay: "LT Coachがバンピック中です..." },
-    Buttons { id: "de", signature: "Bann/Auswahl an Haupttrainer delegieren", cover: "Bann/Auswahl an LT Coach delegieren", swap_cover: "Tausch an LT Coach delegieren", overlay: "LT Coach führt Bann/Auswahl durch..." },
-    Buttons { id: "vi", signature: "Ủy quyền Cấm/Chọn cho HLV trưởng", cover: "Ủy quyền Cấm/Chọn cho LT Coach", swap_cover: "Ủy quyền đổi Tướng cho LT Coach", overlay: "LT Coach đang tiến hành giai đoạn Cấm/Chọn..." },
-    Buttons { id: "pt-BR", signature: "Delegar banimento/escolha ao Treinador Principal", cover: "Delegar banimento/escolha ao LT Coach", swap_cover: "Delegar troca ao LT Coach", overlay: "O LT Coach está realizando o banimento/escolha..." },
-    Buttons { id: "tr", signature: "Yasak/Seçmeyi Baş Antrenöre devret", cover: "Yasak/Seçmeyi LT Coach'a devret", swap_cover: "Değişimi LT Coach'a devret", overlay: "LT Coach yasak/seçme işlemini yürütüyor..." },
-    Buttons { id: "nl", signature: "Ban/pick delegeren aan Hoofdtrainer", cover: "Ban/pick delegeren aan LT Coach", swap_cover: "Ruil delegeren aan LT Coach", overlay: "LT Coach voert ban/pick uit..." },
-    Buttons { id: "ru", signature: "Делегировать бан/пик главному тренеру", cover: "Делегировать бан/пик LT Coach", swap_cover: "Делегировать обмен LT Coach", overlay: "LT Coach проводит драфт..." },
-    Buttons { id: "es-ES", signature: "Delegar bloqueo/selección al Entrenador Principal", cover: "Delegar bloqueo/selección a LT Coach", swap_cover: "Delegar intercambio a LT Coach", overlay: "LT Coach está realizando bloqueo/selección..." },
-    Buttons { id: "fr", signature: "Déléguer le bannissement/sélection à l'Entraîneur Principal", cover: "Déléguer le bannissement/sélection à LT Coach", swap_cover: "Déléguer l'échange à LT Coach", overlay: "LT Coach effectue le bannissement/sélection..." },
-    Buttons { id: "it", signature: "Delega ban/pick all'Allenatore Principale", cover: "Delega ban/pick a LT Coach", swap_cover: "Delega scambio a LT Coach", overlay: "LT Coach sta gestendo il ban/pick..." },
-    Buttons { id: "zh-hans", signature: "将禁用/选择委托给主教练", cover: "将禁用/选择委托给LT Coach", swap_cover: "将交换委托给LT Coach", overlay: "LT Coach正在进行禁用/选择..." },
-    Buttons { id: "zh-hant", signature: "將Ban/Pick委託給主教練", cover: "將Ban/Pick委託給LT Coach", swap_cover: "將交換委託給LT Coach", overlay: "LT Coach正在進行Ban/Pick..." },
-    Buttons { id: "pl", signature: "Deleguj ban/picki do głównego trenera", cover: "Deleguj ban/picki do LT Coach", swap_cover: "Deleguj swapy do LT Coach", overlay: "LT Coach prowadzi ban/picki..." },
-    Buttons { id: "th", signature: "มอบหมายสิทธิ์ขั้นตอนการดราฟต์แบน/เลือกให้โค้ชผู้ช่วยดูแลแทนทั้งหมด", cover: "มอบหมายสิทธิ์ขั้นตอนการดราฟต์แบน/เลือกให้ LT Coach ดูแลแทนทั้งหมด", swap_cover: "มอบหมายหน้าที่สลับตัวให้ LT Coach จัดการแทน", overlay: "LT Coach กำลังดำเนินการดราฟต์แบน/เลือกแชมเปียนแทนหน้างาน..." },
-    Buttons { id: "haw", signature: "pāpā-koho kumu poʻo kūlana", cover: "Delegate ban/pick to LT Coach", swap_cover: "Delegate swap to LT Coach", overlay: "LT Coach is running ban/pick..." },
+    Buttons { id: "ko", signature: "밴픽을 수석코치에게 위임", cover: "밴픽을 LT Coach에게 위임", swap_cover: "스왑을 LT Coach에게 위임", overlay: "LT Coach가 밴픽을 진행중입니다...", instant_warning: "\"밴픽 즉시 완료\"를 누르면 남은 밴픽은 LT Coach가 아닌 게임의 수석코치가 진행합니다." },
+    Buttons { id: "en", signature: "Delegate ban/pick to Head Coach", cover: "Delegate ban/pick to LT Coach", swap_cover: "Delegate swap to LT Coach", overlay: "LT Coach is running ban/pick...", instant_warning: "\"Finish Ban/Pick Now\" hands the rest of the draft to the game's Head Coach, not LT Coach." },
+    Buttons { id: "ja", signature: "バンピックをヘッドコーチに委任", cover: "バンピックをLT Coachに委任", swap_cover: "スワップをLT Coachに委任", overlay: "LT Coachがバンピック中です...", instant_warning: "「バンピックを即時完了」を押すと、残りはLT Coachではなくゲームのヘッドコーチが行います。" },
+    Buttons { id: "de", signature: "Bann/Auswahl an Haupttrainer delegieren", cover: "Bann/Auswahl an LT Coach delegieren", swap_cover: "Tausch an LT Coach delegieren", overlay: "LT Coach führt Bann/Auswahl durch...", instant_warning: "„Bann/Auswahl sofort beenden“ überlässt den Rest dem Haupttrainer des Spiels, nicht LT Coach." },
+    Buttons { id: "vi", signature: "Ủy quyền Cấm/Chọn cho HLV trưởng", cover: "Ủy quyền Cấm/Chọn cho LT Coach", swap_cover: "Ủy quyền đổi Tướng cho LT Coach", overlay: "LT Coach đang tiến hành giai đoạn Cấm/Chọn...", instant_warning: "\"Hoàn Tất Cấm/Chọn Ngay\" sẽ giao phần còn lại cho HLV trưởng của game, không phải LT Coach." },
+    Buttons { id: "pt-BR", signature: "Delegar banimento/escolha ao Treinador Principal", cover: "Delegar banimento/escolha ao LT Coach", swap_cover: "Delegar troca ao LT Coach", overlay: "O LT Coach está realizando o banimento/escolha...", instant_warning: "\"Concluir Draft Agora\" entrega o restante ao Treinador Principal do jogo, não ao LT Coach." },
+    Buttons { id: "tr", signature: "Yasak/Seçmeyi Baş Antrenöre devret", cover: "Yasak/Seçmeyi LT Coach'a devret", swap_cover: "Değişimi LT Coach'a devret", overlay: "LT Coach yasak/seçme işlemini yürütüyor...", instant_warning: "\"Yasak/Seçmeyi Hemen Bitir\" kalanını LT Coach'a değil, oyunun Baş Antrenörüne bırakır." },
+    Buttons { id: "nl", signature: "Ban/pick delegeren aan Hoofdtrainer", cover: "Ban/pick delegeren aan LT Coach", swap_cover: "Ruil delegeren aan LT Coach", overlay: "LT Coach voert ban/pick uit...", instant_warning: "\"Ban/pick direct afronden\" laat de rest over aan de Hoofdtrainer van het spel, niet aan LT Coach." },
+    Buttons { id: "ru", signature: "Делегировать бан/пик главному тренеру", cover: "Делегировать бан/пик LT Coach", swap_cover: "Делегировать обмен LT Coach", overlay: "LT Coach проводит драфт...", instant_warning: "«Завершить бан/пик сразу» передаёт остаток драфта главному тренеру игры, а не LT Coach." },
+    Buttons { id: "es-ES", signature: "Delegar bloqueo/selección al Entrenador Principal", cover: "Delegar bloqueo/selección a LT Coach", swap_cover: "Delegar intercambio a LT Coach", overlay: "LT Coach está realizando bloqueo/selección...", instant_warning: "\"Completar Draft Ya\" deja el resto al Entrenador Principal del juego, no a LT Coach." },
+    Buttons { id: "fr", signature: "Déléguer le bannissement/sélection à l'Entraîneur Principal", cover: "Déléguer le bannissement/sélection à LT Coach", swap_cover: "Déléguer l'échange à LT Coach", overlay: "LT Coach effectue le bannissement/sélection...", instant_warning: "« Terminer le draft » confie la suite à l'Entraîneur Principal du jeu, pas à LT Coach." },
+    Buttons { id: "it", signature: "Delega ban/pick all'Allenatore Principale", cover: "Delega ban/pick a LT Coach", swap_cover: "Delega scambio a LT Coach", overlay: "LT Coach sta gestendo il ban/pick...", instant_warning: "\"Completa Ban/Pick Ora\" affida il resto all'Allenatore Principale del gioco, non a LT Coach." },
+    Buttons { id: "zh-hans", signature: "将禁用/选择委托给主教练", cover: "将禁用/选择委托给LT Coach", swap_cover: "将交换委托给LT Coach", overlay: "LT Coach正在进行禁用/选择...", instant_warning: "“立即完成禁选”会把剩余的禁选交给游戏的主教练，而不是LT Coach。" },
+    Buttons { id: "zh-hant", signature: "將Ban/Pick委託給主教練", cover: "將Ban/Pick委託給LT Coach", swap_cover: "將交換委託給LT Coach", overlay: "LT Coach正在進行Ban/Pick...", instant_warning: "「立即完成Ban/Pick」會把剩下的Ban/Pick交給遊戲的主教練，而不是LT Coach。" },
+    Buttons { id: "pl", signature: "Deleguj ban/picki do głównego trenera", cover: "Deleguj ban/picki do LT Coach", swap_cover: "Deleguj swapy do LT Coach", overlay: "LT Coach prowadzi ban/picki...", instant_warning: "„Zakończ ban/picki teraz” oddaje resztę głównemu trenerowi gry, a nie LT Coach." },
+    Buttons { id: "th", signature: "มอบหมายสิทธิ์ขั้นตอนการดราฟต์แบน/เลือกให้โค้ชผู้ช่วยดูแลแทนทั้งหมด", cover: "มอบหมายสิทธิ์ขั้นตอนการดราฟต์แบน/เลือกให้ LT Coach ดูแลแทนทั้งหมด", swap_cover: "มอบหมายหน้าที่สลับตัวให้ LT Coach จัดการแทน", overlay: "LT Coach กำลังดำเนินการดราฟต์แบน/เลือกแชมเปียนแทนหน้างาน...", instant_warning: "\"จบการดราฟต์ทันที\" จะให้โค้ชของเกมดราฟต์ส่วนที่เหลือแทน ไม่ใช่ LT Coach" },
+    Buttons { id: "haw", signature: "pāpā-koho kumu poʻo kūlana", cover: "Delegate ban/pick to LT Coach", swap_cover: "Delegate swap to LT Coach", overlay: "LT Coach is running ban/pick...", instant_warning: "\"Finish Ban/Pick Now\" hands the rest of the draft to the game's Head Coach, not LT Coach." },
 ];
 
 /// Which of the game's languages produced this text, if it is the game's own
@@ -138,6 +142,7 @@ pub fn compose(game_language: Option<&str>, coach_language: &str) -> Texts {
         cover: buttons.cover,
         overlay: buttons.overlay,
         swap_cover: buttons.swap_cover,
+        instant_warning: buttons.instant_warning,
         warn_title,
         warn_line1,
         warn_line2,
@@ -161,7 +166,7 @@ mod tests {
             for text in [b.cover, b.swap_cover, b.overlay, b.signature] {
                 assert!(!text.is_empty(), "{} has an empty text", b.id);
             }
-            for text in [b.cover, b.swap_cover, b.overlay] {
+            for text in [b.cover, b.swap_cover, b.overlay, b.instant_warning] {
                 assert!(text.contains("LT Coach"), "{}: {text:?} does not name LT Coach", b.id);
             }
         }
@@ -198,6 +203,23 @@ mod tests {
                 "{}: the game's text no longer says {:?}",
                 b.id,
                 b.signature
+            );
+        }
+    }
+
+    /// The warning quotes the game's own name for the button, in every language that
+    /// uses the game's wording (only where the 0.6.3 text file has been extracted).
+    #[test]
+    fn the_instant_warning_quotes_the_games_own_button_text_when_available() {
+        let path = std::path::Path::new("D:/LTTM2/lt_swap_re/assets-0.6.3/text__ui.i18n");
+        let Ok(file) = std::fs::read_to_string(path) else { return };
+        for b in BUTTONS.iter().filter(|b| b.id != "haw") {
+            let quoted = b.instant_warning.split(['"', '「', '」', '“', '”', '„', '«', '»']).nth(1).unwrap_or("");
+            let quoted = quoted.trim();
+            assert!(
+                file.contains(&format!("\"coach_delegation_instant\": \"{quoted}\"")),
+                "{}: {quoted:?} is not the game's own button text",
+                b.id
             );
         }
     }

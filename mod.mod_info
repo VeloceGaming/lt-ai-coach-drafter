@@ -3,18 +3,14 @@
   "contains_code": true,
   "dependencies": [
     {
-      "mod_id": "lt_ai_coach_bridge",
-      "version": ">=2.0.0"
-    },
-    {
       "mod_id": "base",
       "version": ">=0.1.0"
     }
   ],
-  "description": "Lets the LT AI Coach app draft for you in game: the draft screen's Delegate to Head Coach button hands your bans and picks to LT AI Coach (optionally the swap stage too). Requires the LT AI Coach app (separate download) with Draft delegation switched on, and LT AI Coach Bridge. YOU NEED TO ENABLE THIS IN GAME.",
-  "last_updated": "2026-10-06",
+  "description": "Lets the LT AI Coach app draft for you in game: the draft screen's Delegate to Head Coach button hands your bans and picks to LT AI Coach (optionally the swap stage too). Requires the LT AI Coach app (separate download) with Draft delegation switched on. YOU NEED TO ENABLE THIS IN GAME.",
+  "last_updated": "2026-10-07",
   "mod_id": "lt_ai_coach_drafter",
   "mod_type": "native",
   "name": "LT AI Coach Drafter",
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

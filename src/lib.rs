@@ -47,6 +47,9 @@ const DELEGATE_BUTTON: &str = "main.header.delegate_btn";
 const CANCEL_BUTTON: &str = "main.coach_delegation_indicator.cancel";
 const OVERLAY: &str = "main.coach_delegation_indicator";
 const OVERLAY_TEXT: &str = "main.coach_delegation_indicator.text";
+/// "Finish Ban/Pick Now" (game 0.6.3+): finishes the draft without asking the draft hooks.
+const INSTANT_BUTTON: &str = "main.coach_delegation_indicator.instant";
+const INSTANT_WARNING: &str = "main.coach_delegation_indicator.lt_coach_instant_warning";
 const TIMER_TEXT: &str = "main.timer_area.timer_text";
 const COVER: &str = "main.header.lt_coach_delegate_cover";
 const WARN_BUTTON: &str = "main.header.lt_coach_delegate_warn";
@@ -125,7 +128,9 @@ static RECOMMENDATION_ARRIVED: Condvar = Condvar::new();
 /// The user switched on swap-stage delegation in the Coach (heartbeat flag).
 static COACH_SWAP: AtomicBool = AtomicBool::new(false);
 static SWAP_RECOMMENDATION: Mutex<Option<SwapRecommendation>> = Mutex::new(None);
-/// `swap_live.enabled` was present when the draft screen was entered.
+/// The swap hook writes LT Coach's order (the Coach's swap switch is the user's consent);
+/// a `swap_dry_run.enabled` marker present when the draft screen was entered makes it
+/// log what it would write instead (for checking a newly added game build).
 static SWAP_LIVE: AtomicBool = AtomicBool::new(false);
 static NATIVE_ATTEMPTED: AtomicBool = AtomicBool::new(false);
 
@@ -500,6 +505,7 @@ struct Session {
     applied_ready: Option<bool>,
     last_state: Option<CoachState>,
     swap_cover_attempts: u32,
+    instant_warning_attempts: u32,
 }
 
 static SESSION: Mutex<Option<Session>> = Mutex::new(None);
@@ -683,9 +689,10 @@ fn on_enter(ctx: &mut StableClient<'_>, session: &mut Session) {
     session.warn_attempts = 0;
     session.panel_attempts = 0;
     session.swap_cover_attempts = 0;
+    session.instant_warning_attempts = 0;
     session.warn_registered = false;
     session.panel_registered = false;
-    SWAP_LIVE.store(marker("swap_live.enabled"), Ordering::Relaxed);
+    SWAP_LIVE.store(!marker("swap_dry_run.enabled"), Ordering::Relaxed);
     session.seen_overlay = false;
     session.applied_language = None;
     session.applied_ready = None;
@@ -751,7 +758,7 @@ fn sync_ui(ctx: &mut StableClient<'_>, session: &mut Session, native_visible: bo
     let language = format!("{}|{coach_language}", session.game_language.unwrap_or("?"));
     // A text change means rebuilding: button text cannot be rewritten in place.
     if session.applied_language.as_deref().is_some_and(|applied| applied != language) {
-        for path in [COVER, WARN_BUTTON, WARNING, SWAP_COVER] {
+        for path in [COVER, WARN_BUTTON, WARNING, SWAP_COVER, INSTANT_WARNING] {
             if ctx.ui_exists(path) {
                 ctx.ui_remove_node(path);
             }
@@ -760,6 +767,7 @@ fn sync_ui(ctx: &mut StableClient<'_>, session: &mut Session, native_visible: bo
         session.warn_attempts = 0;
         session.panel_attempts = 0;
         session.swap_cover_attempts = 0;
+        session.instant_warning_attempts = 0;
         session.warn_registered = false;
         session.panel_registered = false;
     }
@@ -811,6 +819,42 @@ fn sync_ui(ctx: &mut StableClient<'_>, session: &mut Session, native_visible: bo
         }
         session.applied_ready = Some(ready);
     }
+
+    // The game's "Finish Ban/Pick Now" (0.6.3+) completes the draft without asking the
+    // draft hooks, so LT Coach is skipped from then on. Said under the buttons while LT
+    // Coach drafts and the button is offered; builds without the button never spawn it.
+    let instant_offered = ready && visible(ctx, INSTANT_BUTTON);
+    if instant_offered {
+        ensure_node(
+            ctx,
+            OVERLAY,
+            INSTANT_WARNING,
+            &instant_warning_source(texts.instant_warning),
+            &mut session.instant_warning_attempts,
+        );
+    }
+    set_visible_if_needed(ctx, INSTANT_WARNING, instant_offered);
+}
+
+/// A line under the delegation overlay's buttons (which sit 30-70 px below its centre).
+fn instant_warning_source(text: &str) -> String {
+    format!(
+        r##"lt_coach_instant_warning:label {{
+  @"asset/base/style/main#bold_label";
+  width: 100%;
+  height: 32px;
+  anchor_y: 0.5;
+  pivot_y: 0;
+  y: 86px;
+  ignore_event: true;
+  text: "{}";
+  color: #ffc857ff;
+  align_x: Center;
+  align_y: Center;
+  size: 20;
+}}"##,
+        escape(text)
+    )
 }
 
 /// The look-alike for the swap stage's Coach button (same slot, tertiary-button look),

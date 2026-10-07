@@ -2,10 +2,10 @@
 //! swap-stage Coach button computes.
 //!
 //! What the static analysis and the log-only probe established (LTTM2/lt_swap_re/FINDINGS.md,
-//! Rounds 3-4; game 0.6.2, one exe build):
+//! Rounds 3-4; game 0.6.2), re-established for each later build in [`PROFILES`]:
 //!
 //! * the button runs `MatchUIRunner::apply_coach_swap_order`, which calls
-//!   `compute_coach_swap_order` (RVA `0x2505cf0`) and stores the returned `Vec<usize>`
+//!   `compute_coach_swap_order` (RVA `0x2505cf0` in 0.6.2) and stores the returned `Vec<usize>`
 //!   as the team's row arrangement; the order is an **absolute target**, deterministic,
 //!   `order[row]` = draft-order index of the champion that row should hold (identity
 //!   `[0,1,2,3,4]` before any swap; `[2,1,0,3,4]` swaps Top and Mid);
@@ -18,7 +18,7 @@
 //! length, still a permutation). Anything unexpected leaves the game's own answer alone.
 //!
 //! Safety rails (as in LTDirectControl's adapter): the executable's SHA-256, PE
-//! timestamp and image size must match the build this was written for; both call
+//! timestamp and image size must match one reviewed build in [`PROFILES`]; both call
 //! sites must hold exactly the expected bytes and resolve to the expected target;
 //! patching happens only on the title screen; the executable on disk is never touched;
 //! the DLL is pinned so the relays stay valid; a `disable.native` marker file prevents
@@ -45,15 +45,52 @@ fn log_change(message: String) {
     }
 }
 
-pub const EXPECTED_SHA: &str = "15df9eb3b6915cdcc4c2ebb3b7f5fa232b563c4cdd32208581634817b71adc23";
-const EXPECTED_TIMESTAMP: u32 = 0x6ABC_597E;
-const EXPECTED_IMAGE_SIZE: u32 = 0x052B_8000;
-const COMPUTE_RVA: usize = 0x2505cf0;
-/// (site RVA, expected bytes, label).
-const SITES: [(usize, [u8; 5], &str); 2] = [
-    (0x24fe0b5, [0xe8, 0x36, 0x7c, 0x00, 0x00], "apply"),
-    (0x250ed52, [0xe8, 0x99, 0x6f, 0xff, 0xff], "dialogue"),
+/// Where the hook's dependencies live in one exact, reviewed game build. Builds not
+/// listed here are refused: the hook never searches for its sites at startup.
+pub struct Profile {
+    pub game_version: &'static str,
+    pub sha256: &'static str,
+    timestamp: u32,
+    image_size: u32,
+    compute_rva: usize,
+    /// (site RVA, expected bytes) for the apply and the dialogue site, in [`SITE_LABELS`] order.
+    sites: [(usize, [u8; 5]); 2],
+}
+
+const SITE_LABELS: [&str; 2] = ["apply", "dialogue"];
+
+/// Adding a build: run `LTTM2/lt_swap_re/migrate.py OLD_EXE NEW_EXE`, review the report
+/// (FINDINGS.md, "Migration"), add an entry, then confirm in game with a `swap_dry_run.enabled` marker.
+pub const PROFILES: [Profile; 2] = [
+    Profile {
+        game_version: "0.6.2",
+        sha256: "15df9eb3b6915cdcc4c2ebb3b7f5fa232b563c4cdd32208581634817b71adc23",
+        timestamp: 0x6ABC_597E,
+        image_size: 0x052B_8000,
+        compute_rva: 0x2505cf0,
+        sites: [
+            (0x24fe0b5, [0xe8, 0x36, 0x7c, 0x00, 0x00]),
+            (0x250ed52, [0xe8, 0x99, 0x6f, 0xff, 0xff]),
+        ],
+    },
+    // compute: same 3785 bytes of instructions, constants and callee sizes as 0.6.2;
+    // apply_coach_swap_order equivalent; dialogue builder: two unrelated field changes.
+    Profile {
+        game_version: "0.6.3",
+        sha256: "f21cf691799a83d9afa0ccae3e2b95862f5780446a501ee97860b91b752dbe2f",
+        timestamp: 0x6AC5_C567,
+        image_size: 0x052D_6000,
+        compute_rva: 0x21d0240,
+        sites: [
+            (0x21c8605, [0xe8, 0x36, 0x7c, 0x00, 0x00]),
+            (0x21d92a2, [0xe8, 0x99, 0x6f, 0xff, 0xff]),
+        ],
+    },
 ];
+
+pub fn profile_for(sha256: &str) -> Option<&'static Profile> {
+    PROFILES.iter().find(|p| p.sha256 == sha256)
+}
 
 // ------------------------------------------------------------------ pure logic
 
@@ -243,10 +280,9 @@ pub fn begin_hashing() {
             match &result {
                 Ok(sha) => log(&format!(
                     "swap: executable SHA-256 {sha} ({})",
-                    if sha == EXPECTED_SHA {
-                        "matches the build the swap hook was written for"
-                    } else {
-                        "DIFFERENT: the swap hook stays off"
+                    match profile_for(sha) {
+                        Some(profile) => format!("game {}, a reviewed build for the swap hook", profile.game_version),
+                        None => "not a reviewed build: the swap hook stays off".to_string(),
                     }
                 )),
                 Err(error) => log(&format!("swap: hashing failed: {error}")),
@@ -332,9 +368,8 @@ pub fn install(log_dir: Option<&Path>) -> Result<(), String> {
         return Err("disable.native is present".into());
     }
     let sha = hash_result().ok_or("executable not hashed yet")?.clone()?;
-    if sha != EXPECTED_SHA {
-        return Err(format!("executable SHA-256 {sha} is not the build this was written for; nothing patched"));
-    }
+    let profile = profile_for(&sha)
+        .ok_or_else(|| format!("executable SHA-256 {sha} is not a reviewed build; nothing patched"))?;
     let base = exe_base();
     if base == 0 {
         return Err("executable module unavailable".into());
@@ -347,12 +382,14 @@ pub fn install(log_dir: Option<&Path>) -> Result<(), String> {
             std::ptr::read_unaligned((nt + 24 + 56) as *const u32),
         )
     };
-    if timestamp != EXPECTED_TIMESTAMP || image_size != EXPECTED_IMAGE_SIZE {
+    if timestamp != profile.timestamp || image_size != profile.image_size {
         return Err(format!("PE timestamp {timestamp:#x} / image size {image_size:#x} differ"));
     }
 
-    let original = base + COMPUTE_RVA;
-    for (rva, expected, label) in SITES {
+    let compute_rva = profile.compute_rva;
+    let sites = profile.sites;
+    let original = base + compute_rva;
+    for ((rva, expected), label) in sites.into_iter().zip(SITE_LABELS) {
         let site = base + rva;
         let actual = unsafe { read_bytes::<5>(site) };
         if actual != expected {
@@ -361,7 +398,7 @@ pub fn install(log_dir: Option<&Path>) -> Result<(), String> {
         let relative = i32::from_le_bytes([actual[1], actual[2], actual[3], actual[4]]);
         let target = (site as i64 + 5 + relative as i64) as usize;
         if target != original {
-            return Err(format!("{label} site {rva:#x} calls {:#x}, expected {COMPUTE_RVA:#x}", target.wrapping_sub(base)));
+            return Err(format!("{label} site {rva:#x} calls {:#x}, expected {compute_rva:#x}", target.wrapping_sub(base)));
         }
     }
 
@@ -370,7 +407,7 @@ pub fn install(log_dir: Option<&Path>) -> Result<(), String> {
     let mut relays = [0usize; 2];
     let mut patched = [[0u8; 5]; 2];
     unsafe {
-        for (i, (rva, _, _)) in SITES.iter().enumerate() {
+        for (i, (rva, _)) in sites.iter().enumerate() {
             let site = base + rva;
             relays[i] = make_relay(site, hooks[i])?;
             patched[i] = relative_call(site, relays[i])?;
@@ -379,10 +416,10 @@ pub fn install(log_dir: Option<&Path>) -> Result<(), String> {
         if win::GetModuleHandleExW(1 | 4, hook_apply as *const c_void, &mut module) == 0 {
             return Err("cannot pin the DLL; nothing patched".into());
         }
-        for (i, (rva, _, label)) in SITES.iter().enumerate() {
+        for (i, ((rva, _), label)) in sites.iter().zip(SITE_LABELS).enumerate() {
             let site = base + rva;
             let revert = |upto: usize| {
-                for (rva_j, expected_j, _) in SITES.iter().take(upto + 1) {
+                for (rva_j, expected_j) in sites.iter().take(upto + 1) {
                     let _ = write_site(base + rva_j, *expected_j);
                 }
             };
@@ -399,9 +436,10 @@ pub fn install(log_dir: Option<&Path>) -> Result<(), String> {
     }
     let _ = INSTALLED.set(());
     log(&format!(
-        "swap: PATCHED base={base:#x} original={original:#x} sites=[{:#x}, {:#x}]",
-        base + SITES[0].0,
-        base + SITES[1].0
+        "swap: PATCHED game {} base={base:#x} original={original:#x} sites=[{:#x}, {:#x}]",
+        profile.game_version,
+        base + sites[0].0,
+        base + sites[1].0
     ));
     Ok(())
 }
@@ -450,20 +488,20 @@ fn after(site: usize, out: usize, this: usize) {
     match plan(&current, target) {
         Plan::Same => log_change(format!(
             "swap: {} call: the game's order {current:?} already equals LT Coach's",
-            SITES[site].2
+            SITE_LABELS[site]
         )),
         Plan::Refuse(reason) => log_change(format!("swap: refused: {reason}")),
         Plan::Replace(order) => match mode {
             Mode::DryRun => log_change(format!(
-                "swap: DRY RUN {} call: would replace {current:?} with {order:?} (not written; create swap_live.enabled to go live)",
-                SITES[site].2
+                "swap: DRY RUN {} call: would replace {current:?} with {order:?} (not written: swap_dry_run.enabled is present)",
+                SITE_LABELS[site]
             )),
             Mode::Live => {
                 let wrote = write_words(ptr as usize, &order);
                 let readback = read_words(ptr as usize, 5);
                 log_change(format!(
                     "swap: LIVE {} call: replaced {current:?} with {order:?} (wrote={wrote}, read-back={readback:?})",
-                    SITES[site].2
+                    SITE_LABELS[site]
                 ));
             }
         },
@@ -475,11 +513,60 @@ mod tests {
     use super::*;
 
     #[test]
-    fn both_call_sites_resolve_to_the_compute_function() {
-        for (rva, bytes, label) in SITES {
-            assert_eq!(bytes[0], 0xe8, "{label}");
-            let relative = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
-            assert_eq!((rva as i64 + 5 + relative as i64) as usize, COMPUTE_RVA, "{label}");
+    fn in_every_profile_both_call_sites_resolve_to_the_compute_function() {
+        for profile in &PROFILES {
+            for ((rva, bytes), label) in profile.sites.into_iter().zip(SITE_LABELS) {
+                let at = format!("{} {label}", profile.game_version);
+                assert_eq!(bytes[0], 0xe8, "{at}");
+                let relative = i32::from_le_bytes([bytes[1], bytes[2], bytes[3], bytes[4]]);
+                assert_eq!((rva as i64 + 5 + relative as i64) as usize, profile.compute_rva, "{at}");
+            }
+        }
+    }
+
+    #[test]
+    fn profiles_are_distinct_and_found_only_by_their_exact_hash() {
+        for (i, a) in PROFILES.iter().enumerate() {
+            assert_eq!(a.sha256.len(), 64);
+            assert!(a.sha256.bytes().all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c)));
+            assert_eq!(profile_for(a.sha256).map(|p| p.game_version), Some(a.game_version));
+            for b in &PROFILES[i + 1..] {
+                assert_ne!(a.sha256, b.sha256);
+                assert_ne!(a.game_version, b.game_version);
+            }
+        }
+        assert!(profile_for("").is_none());
+        assert!(profile_for(&PROFILES[0].sha256.to_uppercase()).is_none());
+    }
+
+    /// Only on the developer's machine: each profile against the preserved executable
+    /// it was reviewed on.
+    #[test]
+    fn profiles_match_the_preserved_executables_when_available() {
+        let builds = Path::new("D:/LTTM2/LTDirectControl/research/game-builds");
+        for profile in &PROFILES {
+            let Ok(exe) = std::fs::read(builds.join(profile.game_version).join("TeamfightManager2.exe")) else {
+                continue;
+            };
+            let u16_at = |o: usize| usize::from(u16::from_le_bytes([exe[o], exe[o + 1]]));
+            let u32_at = |o: usize| u32::from_le_bytes([exe[o], exe[o + 1], exe[o + 2], exe[o + 3]]);
+            let nt = u32_at(0x3c) as usize;
+            assert_eq!(u32_at(nt + 8), profile.timestamp, "{}", profile.game_version);
+            assert_eq!(u32_at(nt + 24 + 56), profile.image_size, "{}", profile.game_version);
+            let sections = nt + 24 + u16_at(nt + 20);
+            let file_offset = |rva: usize| {
+                (0..u16_at(nt + 6))
+                    .map(|i| sections + i * 40)
+                    .find_map(|s| {
+                        let (size, va, raw) = (u32_at(s + 8) as usize, u32_at(s + 12) as usize, u32_at(s + 20) as usize);
+                        (va <= rva && rva < va + size).then(|| rva - va + raw)
+                    })
+                    .expect("RVA inside a section")
+            };
+            for ((rva, bytes), label) in profile.sites.into_iter().zip(SITE_LABELS) {
+                let at = file_offset(rva);
+                assert_eq!(exe[at..at + 5], bytes, "{} {label}", profile.game_version);
+            }
         }
     }
 

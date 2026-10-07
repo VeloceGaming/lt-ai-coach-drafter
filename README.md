@@ -2,7 +2,7 @@
 
 A Teamfight Manager 2 mod that lets the LT AI Coach app draft for you in game:
 the draft screen's "Delegate to Head Coach" becomes "Delegate ban/pick to LT Coach", and the optional
-swap-stage Coach button applies LT Coach's arrangement. Tested on game 0.6.2.
+swap-stage Coach button applies LT Coach's arrangement. Tested on game 0.6.2; the swap-stage patch is reviewed for 0.6.2 and 0.6.3 (see `src/swap.rs`, `PROFILES`).
 
 See `README.txt` for behaviour, safety rules and the swap-stage native patch.
 

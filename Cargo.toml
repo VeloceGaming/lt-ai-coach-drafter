@@ -1,6 +1,6 @@
 [package]
 name = "lt_ai_coach_drafter"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 
 # LT Coach Drafter: replaces the game's "Delegate to Head Coach" so the game's own
