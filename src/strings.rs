@@ -46,7 +46,7 @@ const BUTTONS: [Buttons; 17] = [
     Buttons { id: "en", signature: "Delegate ban/pick to Head Coach", cover: "Delegate ban/pick to LT Coach", swap_cover: "Delegate swap to LT Coach", overlay: "LT Coach is running ban/pick...", instant_warning: "\"Finish Ban/Pick Now\" hands the rest of the draft to the game's Head Coach, not LT Coach." },
     Buttons { id: "ja", signature: "バンピックをヘッドコーチに委任", cover: "バンピックをLT Coachに委任", swap_cover: "スワップをLT Coachに委任", overlay: "LT Coachがバンピック中です...", instant_warning: "「バンピックを即時完了」を押すと、残りはLT Coachではなくゲームのヘッドコーチが行います。" },
     Buttons { id: "de", signature: "Bann/Auswahl an Haupttrainer delegieren", cover: "Bann/Auswahl an LT Coach delegieren", swap_cover: "Tausch an LT Coach delegieren", overlay: "LT Coach führt Bann/Auswahl durch...", instant_warning: "„Bann/Auswahl sofort beenden“ überlässt den Rest dem Haupttrainer des Spiels, nicht LT Coach." },
-    Buttons { id: "vi", signature: "Ủy quyền Cấm/Chọn cho HLV trưởng", cover: "Ủy quyền Cấm/Chọn cho LT Coach", swap_cover: "Ủy quyền đổi Tướng cho LT Coach", overlay: "LT Coach đang tiến hành giai đoạn Cấm/Chọn...", instant_warning: "\"Hoàn Tất Cấm/Chọn Ngay\" sẽ giao phần còn lại cho HLV trưởng của game, không phải LT Coach." },
+    Buttons { id: "vi", signature: "Ủy quyền Cấm/Chọn cho HLV trưởng", cover: "Ủy quyền Cấm/Chọn cho LT Coach", swap_cover: "Ủy quyền đổi Tướng cho LT Coach", overlay: "LT Coach đang tiến hành giai đoạn Cấm/Chọn...", instant_warning: "\"Hoàn Tất Cấm/Chọn Ngay Lập Tức\" sẽ giao phần còn lại cho HLV trưởng của game, không phải LT Coach." },
     Buttons { id: "pt-BR", signature: "Delegar banimento/escolha ao Treinador Principal", cover: "Delegar banimento/escolha ao LT Coach", swap_cover: "Delegar troca ao LT Coach", overlay: "O LT Coach está realizando o banimento/escolha...", instant_warning: "\"Concluir Draft Agora\" entrega o restante ao Treinador Principal do jogo, não ao LT Coach." },
     Buttons { id: "tr", signature: "Yasak/Seçmeyi Baş Antrenöre devret", cover: "Yasak/Seçmeyi LT Coach'a devret", swap_cover: "Değişimi LT Coach'a devret", overlay: "LT Coach yasak/seçme işlemini yürütüyor...", instant_warning: "\"Yasak/Seçmeyi Hemen Bitir\" kalanını LT Coach'a değil, oyunun Baş Antrenörüne bırakır." },
     Buttons { id: "nl", signature: "Ban/pick delegeren aan Hoofdtrainer", cover: "Ban/pick delegeren aan LT Coach", swap_cover: "Ruil delegeren aan LT Coach", overlay: "LT Coach voert ban/pick uit...", instant_warning: "\"Ban/pick direct afronden\" laat de rest over aan de Hoofdtrainer van het spel, niet aan LT Coach." },
@@ -208,10 +208,10 @@ mod tests {
     }
 
     /// The warning quotes the game's own name for the button, in every language that
-    /// uses the game's wording (only where the 0.6.3 text file has been extracted).
+    /// uses the game's wording (only where the 0.6.5 text file has been extracted).
     #[test]
     fn the_instant_warning_quotes_the_games_own_button_text_when_available() {
-        let path = std::path::Path::new("D:/LTTM2/lt_swap_re/assets-0.6.3/text__ui.i18n");
+        let path = std::path::Path::new("D:/LTTM2/lt_swap_re/assets-0.6.5/text__ui.i18n");
         let Ok(file) = std::fs::read_to_string(path) else { return };
         for b in BUTTONS.iter().filter(|b| b.id != "haw") {
             let quoted = b.instant_warning.split(['"', '「', '」', '“', '”', '„', '«', '»']).nth(1).unwrap_or("");

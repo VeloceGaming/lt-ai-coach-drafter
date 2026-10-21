@@ -8,9 +8,9 @@
     }
   ],
   "description": "Lets the LT AI Coach app draft for you in game: the draft screen's Delegate to Head Coach button hands your bans and picks to LT AI Coach (optionally the swap stage too). Requires the LT AI Coach app (separate download) with Draft delegation switched on. YOU NEED TO ENABLE THIS IN GAME.",
-  "last_updated": "2026-10-07",
+  "last_updated": "2026-10-22",
   "mod_id": "lt_ai_coach_drafter",
   "mod_type": "native",
   "name": "LT AI Coach Drafter",
-  "version": "1.0.1"
+  "version": "1.0.3"
 }

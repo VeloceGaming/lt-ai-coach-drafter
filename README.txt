@@ -1,4 +1,4 @@
-LT AI COACH DRAFTER 1.0.1
+LT AI COACH DRAFTER 1.0.3
 =========================
 
 WHAT IT DOES
@@ -41,7 +41,8 @@ SWAP-STAGE DELEGATION (experimental, native)
   it applies LT Coach's. To do that the mod redirects the two calls to the game's
   compute_coach_swap_order (a 10-byte patch of the running game, never the .exe on disk).
   It does so ONLY IF the game exe is exactly one of the builds it was reviewed for
-  (game 0.6.2 and 0.6.3: SHA-256, PE timestamp, both call sites' bytes); on any other
+  (game 0.6.4, 0.6.5 and the 0.7.0 beta build 2: SHA-256, PE timestamp, both call sites' bytes);
+  beta updates change the exe often, so it may switch itself off after one. On any other
   build, such as after a game update, it stays off and the log says why. Everything else
   in the mod is update-proof; this is the one part that is not.
 

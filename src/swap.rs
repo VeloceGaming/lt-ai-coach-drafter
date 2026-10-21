@@ -2,7 +2,7 @@
 //! swap-stage Coach button computes.
 //!
 //! What the static analysis and the log-only probe established (LTTM2/lt_swap_re/FINDINGS.md,
-//! Rounds 3-4; game 0.6.2), re-established for each later build in [`PROFILES`]:
+//! Rounds 3-4; game 0.6.2, no longer supported), re-established for each build in [`PROFILES`]:
 //!
 //! * the button runs `MatchUIRunner::apply_coach_swap_order`, which calls
 //!   `compute_coach_swap_order` (RVA `0x2505cf0` in 0.6.2) and stores the returned `Vec<usize>`
@@ -61,29 +61,51 @@ const SITE_LABELS: [&str; 2] = ["apply", "dialogue"];
 
 /// Adding a build: run `LTTM2/lt_swap_re/migrate.py OLD_EXE NEW_EXE`, review the report
 /// (FINDINGS.md, "Migration"), add an entry, then confirm in game with a `swap_dry_run.enabled` marker.
-pub const PROFILES: [Profile; 2] = [
+pub const PROFILES: [Profile; 3] = [
+    // compute's code changed from 0.6.3 (765 vs 786 instructions; some scoring constants
+    // gone), so only its contract is proven statically: same out-parameter (None = cap
+    // u64::MAX; success writes cap, then ptr+len), apply_coach_swap_order equivalent
+    // (calls at +0x45, stores at runner+0x198), dialogue site by unique context, exactly
+    // two callers. The order's meaning (order[row] = draft index) rests on the in-game
+    // dry-run.
     Profile {
-        game_version: "0.6.2",
-        sha256: "15df9eb3b6915cdcc4c2ebb3b7f5fa232b563c4cdd32208581634817b71adc23",
-        timestamp: 0x6ABC_597E,
-        image_size: 0x052B_8000,
-        compute_rva: 0x2505cf0,
+        game_version: "0.6.4",
+        sha256: "a1d05045405a12e2bed182daeafcad8c8a40cf29ab68ba6ea5bfd30257439582",
+        timestamp: 0x6ACF_3112,
+        image_size: 0x0533_F000,
+        compute_rva: 0x20964f0,
         sites: [
-            (0x24fe0b5, [0xe8, 0x36, 0x7c, 0x00, 0x00]),
-            (0x250ed52, [0xe8, 0x99, 0x6f, 0xff, 0xff]),
+            (0x208e8b5, [0xe8, 0x36, 0x7c, 0x00, 0x00]),
+            (0x209f352, [0xe8, 0x99, 0x71, 0xff, 0xff]),
         ],
     },
-    // compute: same 3785 bytes of instructions, constants and callee sizes as 0.6.2;
-    // apply_coach_swap_order equivalent; dialogue builder: two unrelated field changes.
+    // compute: the 0.6.4 code with one small conversion step removed (13 structural
+    // differences), same out-parameter contract; apply_coach_swap_order byte-identical
+    // to 0.6.4; dialogue site by unique context; exactly two callers.
     Profile {
-        game_version: "0.6.3",
-        sha256: "f21cf691799a83d9afa0ccae3e2b95862f5780446a501ee97860b91b752dbe2f",
-        timestamp: 0x6AC5_C567,
-        image_size: 0x052D_6000,
-        compute_rva: 0x21d0240,
+        game_version: "0.6.5",
+        sha256: "daf040db8a3a3ae136f3ef8ce704e2718f049656b6b5e4872eacb599811d30b5",
+        timestamp: 0x6AD8_5238,
+        image_size: 0x0530_9000,
+        compute_rva: 0x22b2b40,
         sites: [
-            (0x21c8605, [0xe8, 0x36, 0x7c, 0x00, 0x00]),
-            (0x21d92a2, [0xe8, 0x99, 0x6f, 0xff, 0xff]),
+            (0x22aaf05, [0xe8, 0x36, 0x7c, 0x00, 0x00]),
+            (0x22bb972, [0xe8, 0xc9, 0x71, 0xff, 0xff]),
+        ],
+    },
+    // Beta branch, second 0.7.0 build. compute reworked like 0.6.4's (other registers,
+    // moved data offsets), same out-parameter contract; apply_coach_swap_order equal to
+    // the first beta's apart from one game-data offset; dialogue site by unique context;
+    // exactly two callers.
+    Profile {
+        game_version: "0.7.0b2",
+        sha256: "79423383a353b63f4a4f907889eae2d6cc778c53519e9e08828b200c2a88e744",
+        timestamp: 0x6AD8_5082,
+        image_size: 0x058F_B000,
+        compute_rva: 0x2e59840,
+        sites: [
+            (0x2e51c25, [0xe8, 0x16, 0x7c, 0x00, 0x00]),
+            (0x2e62902, [0xe8, 0x39, 0x6f, 0xff, 0xff]),
         ],
     },
 ];
